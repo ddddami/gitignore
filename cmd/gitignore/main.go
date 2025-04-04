@@ -12,8 +12,15 @@ import (
 //go:embed templates/*.gitignore
 var templateFS embed.FS
 
+func customUsage() {
+	fmt.Fprintln(os.Stderr, "Usage of gitignore:")
+	fmt.Println("  <template>")
+	fmt.Println("        Generate gitignore for <template-name>")
+	flag.PrintDefaults()
+}
 func main() {
 	list := flag.Bool("list", false, "List available templates")
+	flag.Usage = customUsage
 	flag.Parse()
 
 	if *list {
