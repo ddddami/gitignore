@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-//go:embed templates
+//go:embed templates/*.gitignore
 var templateFS embed.FS
 
 func main() {
@@ -30,11 +30,18 @@ func main() {
 	}
 
 	if len(flag.Args()) == 0 {
-		fmt.Println("Please specify a template, e.g 'node', 'python'. Run `list` to list all available templates")
-		fmt.Println("Available templates...")
-		listTemplates()
+		fmt.Println("Usage: gitignore <template> e.g 'gitignore python'. \nRun `gitignore list` to see available templates")
 		return
 	}
+
+	template := strings.ToLower(flag.Args()[0])
+	content, err := LoadTemplate(template)
+	if err != nil {
+		fmt.Printf("Error loading template '%s': %v\n", template, err)
+		os.Exit(1)
+	}
+
+	fmt.Print(content)
 }
 
 func listTemplates() ([]string, error) {
@@ -51,4 +58,14 @@ func listTemplates() ([]string, error) {
 		}
 	}
 	return templates, nil
+}
+
+func LoadTemplate(templateName string) (string, error) {
+	filename := fmt.Sprintf("templates/%s.gitignore", templateName)
+	data, err := templateFS.ReadFile(filename)
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	return string(data), nil
 }
