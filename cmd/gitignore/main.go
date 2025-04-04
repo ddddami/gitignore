@@ -19,7 +19,7 @@ func main() {
 	if *list {
 		templates, err := listTemplates()
 		if err != nil {
-			fmt.Println("An error occured lisiting available templates")
+			fmt.Println("An error occured listing available templates")
 			os.Exit(1)
 		}
 		fmt.Println("Available templates:")
@@ -34,14 +34,11 @@ func main() {
 		return
 	}
 
-	template := strings.ToLower(flag.Args()[0])
-	content, err := LoadTemplate(template)
-	if err != nil {
-		fmt.Printf("Error loading template '%s': %v\n", template, err)
+	templateName := strings.ToLower(flag.Args()[0])
+	if err := generateGitignore(templateName); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
-
-	fmt.Print(content)
 }
 
 func listTemplates() ([]string, error) {
@@ -60,7 +57,7 @@ func listTemplates() ([]string, error) {
 	return templates, nil
 }
 
-func LoadTemplate(templateName string) (string, error) {
+func loadTemplate(templateName string) (string, error) {
 	filename := fmt.Sprintf("templates/%s.gitignore", templateName)
 	data, err := templateFS.ReadFile(filename)
 	if err != nil {
@@ -68,4 +65,21 @@ func LoadTemplate(templateName string) (string, error) {
 		return "", err
 	}
 	return string(data), nil
+}
+
+func generateGitignore(templateName string) error {
+	if _, err := os.Stat(".gitignore"); err == nil {
+		return fmt.Errorf(".gitignore already exists in current directory")
+	}
+
+	content, err := loadTemplate(templateName)
+	if err != nil {
+		return fmt.Errorf("error loading template '%s': %v", templateName, err)
+	}
+
+	err = os.WriteFile(".gitignore", []byte(content), 0o644)
+	if err != nil {
+		return fmt.Errorf("failed to write .gitignore file: %v", err)
+	}
+	return nil
 }
