@@ -10,7 +10,7 @@ A simple cli tool written in go to generates gitignore files for different proje
 You can download the latest release [here](https://github.com/ddddami/gitignore/releases). Extract the zip file, and run the executable, like;
 
 ```sh
-cd gitignore && ./gitignore -help
+cd gitignore && ./gitignore --help
 ```
 
 You can add this to your PATH too.
@@ -20,7 +20,7 @@ You can add this to your PATH too.
 sudo mv gitignore /usr/local/bin/
 ```
 
-### From Source
+### or From Source
 
 1. Clone the repository:
 
@@ -53,6 +53,7 @@ For example:
 ```
 gitignore node   # Generates a Node.js .gitignore
 gitignore python # Generates a Python .gitignore
+gitignore python --dir="custom/dir"
 ```
 
 Running `gitignore` without arguments will display available templates.
@@ -71,7 +72,7 @@ Rebuild the application
 
 Some ideas for extending this tool:
 
-- Add support for combining multiple templates [gitignore node,python gitignore node python]
-- Add support for adding templates to custom dirs
-- Add a flag to append to an existing .gitignore instead of creating/trying to create a new one
-- Fetch templates remotely (from GitHub)
+- [ ] Add support for combining multiple templates [gitignore node,python gitignore node python]
+- [x] Add support for adding templates to custom dirs
+- [x] Add a flag to append to an existing .gitignore instead of creating/trying to create a new one
+- [ ] Fetch templates remotely (from GitHub)
