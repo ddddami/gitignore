@@ -18,8 +18,10 @@ func customUsage() {
 	fmt.Println("        Generate gitignore for <template-name>")
 	flag.PrintDefaults()
 }
+
 func main() {
 	list := flag.Bool("list", false, "List available templates")
+	dir := flag.String("dir", ".", "Target directory for the .gitignore file")
 	flag.Usage = customUsage
 	flag.Parse()
 
@@ -42,7 +44,7 @@ func main() {
 	}
 
 	templateName := strings.ToLower(flag.Args()[0])
-	if err := generateGitignore(templateName); err != nil {
+	if err := generateGitignore(templateName, *dir); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
@@ -74,9 +76,13 @@ func loadTemplate(templateName string) (string, error) {
 	return string(data), nil
 }
 
-func generateGitignore(templateName string) error {
-	if _, err := os.Stat(".gitignore"); err == nil {
-		return fmt.Errorf(".gitignore already exists in current directory")
+func generateGitignore(templateName string, directory string) error {
+	if err := os.MkdirAll(directory, 0o755); err != nil {
+		return fmt.Errorf("failed to create directory '%s': %v", directory, err)
+	}
+	gitignorePath := filepath.Join(directory, ".gitignore")
+	if _, err := os.Stat(gitignorePath); err == nil {
+		return fmt.Errorf(".gitignore already exists in directory")
 	}
 
 	content, err := loadTemplate(templateName)
@@ -84,7 +90,7 @@ func generateGitignore(templateName string) error {
 		return fmt.Errorf("error loading template '%s': %v", templateName, err)
 	}
 
-	err = os.WriteFile(".gitignore", []byte(content), 0o644)
+	err = os.WriteFile(gitignorePath, []byte(content), 0o644)
 	if err != nil {
 		return fmt.Errorf("failed to write .gitignore file: %v", err)
 	}
