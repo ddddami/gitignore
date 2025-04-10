@@ -21,8 +21,11 @@ func customUsage() {
 }
 
 func main() {
-	list := flag.Bool("list", false, "List available templates")
-	dir := flag.String("dir", ".", "Target directory for the .gitignore file")
+	list := flag.BoolP("list", "l", false, "List available templates")
+	dir := flag.StringP("dir", "d", ".", "Target directory for the .gitignore file")
+	force := flag.BoolP("force", "f", false, "Overwrite existing .gitignore file")
+	append := flag.BoolP("append", "a", false, "Append to existing .gitignore file")
+
 	flag.Usage = customUsage
 	flag.Parse()
 
@@ -45,7 +48,7 @@ func main() {
 	}
 
 	templateName := strings.ToLower(flag.Args()[0])
-	if err := generateGitignore(templateName, *dir); err != nil {
+	if err := generateGitignore(templateName, *dir, *force, *append); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
@@ -77,13 +80,17 @@ func loadTemplate(templateName string) (string, error) {
 	return string(data), nil
 }
 
-func generateGitignore(templateName string, directory string) error {
+func generateGitignore(templateName string, directory string, force, append bool) error {
 	if err := os.MkdirAll(directory, 0o755); err != nil {
 		return fmt.Errorf("failed to create directory '%s': %v", directory, err)
 	}
+
 	gitignorePath := filepath.Join(directory, ".gitignore")
+
 	if _, err := os.Stat(gitignorePath); err == nil {
-		return fmt.Errorf(".gitignore already exists in directory")
+		if !force && !append {
+			return fmt.Errorf(".gitignore already exists in %s\nUse --force to overwrite or --append to add", directory)
+		}
 	}
 
 	content, err := loadTemplate(templateName)
@@ -91,9 +98,21 @@ func generateGitignore(templateName string, directory string) error {
 		return fmt.Errorf("error loading template '%s': %v", templateName, err)
 	}
 
-	err = os.WriteFile(gitignorePath, []byte(content), 0o644)
-	if err != nil {
-		return fmt.Errorf("failed to write .gitignore file: %v", err)
+	if append {
+		f, err := os.OpenFile(gitignorePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o644)
+		if err != nil {
+			return fmt.Errorf("failed to open .gitignore file for appending: %v", err)
+		}
+		defer f.Close()
+
+		if _, err := f.WriteString("\n\n" + content); err != nil {
+			return fmt.Errorf("failed to append to .gitignore file: %v", err)
+		}
+	} else {
+		if err := os.WriteFile(gitignorePath, []byte(content), 0o644); err != nil {
+			return fmt.Errorf("failed to write .gitignore file: %v", err)
+		}
 	}
+
 	return nil
 }
