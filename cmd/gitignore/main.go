@@ -2,11 +2,12 @@ package main
 
 import (
 	"embed"
-	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+
+	flag "github.com/spf13/pflag"
 )
 
 //go:embed templates/*.gitignore
